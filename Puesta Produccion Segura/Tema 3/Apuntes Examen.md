@@ -7,24 +7,22 @@ Debido a la amplitud y complejidad de éste tema, lo iremos evaluando en varias 
 ## 1ª parte: (3,3 p.)
 
 SQLi Error Based
-SQLi UNION Based
-SQLi Blind Boolean
-
+<br>SQLi UNION Based
+<br>SQLi Blind Boolean
 
 ## 2ª parte: (3,3 p.)
 
 XSS Reflejado
-XSS Persistente
-Cross-Site Request Forgery
-Inyección de comandos
-
+<br>XSS Persistente
+<br>Cross-Site Request Forgery
+<br>Inyección de comandos
 
 ## 3ª parte: (3,4 p.)
 
 Robos de sesión por Session Fixation
-Ataques por diccionario y fuerza bruta
-Phising e Ingeniería Social
-RFI y LFI
+<br>Ataques por diccionario y fuerza bruta
+<br>Phising e Ingeniería Social
+<br>RFI y LFI
 
 
 Las fechas previstas para la realización de éstas pruebas prácticas serán los miércoles: 8, 15 y 22 de febrero de 2023, respectivamente, en la cuarta hora de la tarde.
