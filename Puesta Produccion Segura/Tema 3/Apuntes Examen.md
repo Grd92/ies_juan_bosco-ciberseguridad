@@ -30,6 +30,11 @@ Las fechas previstas para la realización de éstas pruebas prácticas serán lo
 
 # Apuntes
 
+## Tabla de contenidos
+1. [SQLi Error Based](#sqli-error-based)
+2. [SQLi UNION Based](#sqli-union-based)
+3. [SQLi Blind Based](#sqli-blind-based)
+
 ## 1ª parte: (3,3 p.)
 
 ### SQLi Error Based
