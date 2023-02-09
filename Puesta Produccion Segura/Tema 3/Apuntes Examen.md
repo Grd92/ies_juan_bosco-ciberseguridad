@@ -87,7 +87,7 @@ también se hará uso de
 
 Para descubrir de una manera rápida cuantas columnas está devolviendo la columna en la ejecución de la query en servidor, podemos usar la siguiente instrucción sql medianto injection
 
-> ' oder by(n) #
+> ' order by(n) #
 
 Donde n sera un numero (1, 2, 3, 4) iremos iterando el numero hasta que nos devuelva error, de esa manera conoceremos el número de columnas ya que si decimos que realice ordenación por a columna 3 y da error quiere decir que tenemos 2 columnas. ( n - 1 )
 
