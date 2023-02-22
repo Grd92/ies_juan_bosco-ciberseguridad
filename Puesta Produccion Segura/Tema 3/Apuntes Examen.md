@@ -39,6 +39,12 @@ Las fechas previstas para la realización de éstas pruebas prácticas serán lo
 <br> 2.2 [XSS Persistente](#xss-persistente)
 <br> 2.3 [Cross-Site Request Forgery](#cross-site-request-forgery)
 <br> 2.4 [Inyección de comandos](#inyección-de-comandos)
+<br>
+<br> 3.1 [Robos de sesión por Session Fixation](#robos-de-sesión-por-session-fixation)
+<br> 3.2 [Ataques por diccionario y fuerza bruta](#ataques-por-diccionario-y-fuerza-bruta)
+<br> 3.3 [Phising e Ingeniería Social](#phising-e-ingeniería-social)
+<br> 3.3.1 [Exposición de datos sensibles](#exposición-de-datos-sensibles)
+<br> 3.4 [RFI y LFI](#rfi-y-lfi)
 
 ## 1ª parte: (3,3 p.)
 
@@ -445,6 +451,218 @@ Usaremos el siguiente conjunto de instrucciones
 ## 3ª parte: (3,4 p.)
 
 ### Robos de sesión por Session Fixation
+
+Los ataques por Session Fixation consisten en:
+
+- Si la página web mantiene la misma sesión o identificador de un usuario antes y después de la autenticación está cometiendo un fallo de seguridad.
+- Un atacante puede obtener un identificador, por ejemplo conectando con el sitio web, incluso sin autenticarse.
+- Usando este identificador puede tratar de modificar la petición del usuario legítimo para que este utilice el identificador que previamente generó el atacante.
+- Cuando el usuario se autentique, ese identificador se ligará con la sesión del usuario.
+
+#### *Ejemplo práctico para Examen*
+
+- En OWASP WebGoat > START WEBGOAT
+- [panel izquierda] Session Management Flaws > Session Fixation
+- **[PASO 1]** somos hacker JOE hay que interceptar el mensaje de Banco a Jane (user) y mandarlo como nosotros queramos. Puede usarse un *XSS* interactuando con la página y fingiendo un *ID* de la *Session* a la que nos de la gana, tambien puede usarse un *Man In The Middle*.
+<br><br>Para hacer el ataque modificamos el correo interceptado, añadiendo el *SID* que queramos y así saber cuál es.
+<br><br>Modificamos el mail que va a mandarse, modificando el a `href=/WebGoat/attack?Screen=56&menu=1800` - Muy importante WebGoat (G mayuscula)
+<br><br>Debemos convertilo a `href=/WebGoat/attack?Screen=56&menu=1800&SID=hola` - Agregarle el &SID=hola
+<br><br>Pulsamos en SEDN MAIL'
+
+- **[PASO 2]** ahora somos la víctima, estamos visualizando el correo, y debemos pulsar en el link (Goat Hills Financial)
+
+- **[PASO 3]** seguimos siendo la víctima, ahora estamos visualizando el form del link del email.
+<br><br>Si miramos la URL del navegador, observaremos que contiene el SID=hola que agregamos.
+<br><br>Introducimos user y pass del form en cuestión (para este caso Jane:tarzan) e iniciamos sesión.
+<br><br>Ya hemos logado, y como puede apreciarse en el navegador, la sesión sigue siendo 'hola'. Esta sesión tiene todo el poder de Jane. Ahora si somos **Jane** no necesitamos loguearnos, simplemento añadimos &SID=hola a la url y accederemos como si fuera la usuaria **Jane**
+<br><br>Accederemos en nueva pestaña al link de abajo y veremos que no tiene session, sin embargo si ponemos el SID=hola estaremos logados.
+
+#### *Robo de sesión por token predecible*
+
+- Si una página web genera los tokens de sesión de forma secuencial o predecible, este token no puede considerarse seguro.
+- El atacante puede obtener los posibles tokens de usuario tanto hacia delante como hacía atrás.
+- Puede ser relativamente fácil obtener el patrón de generación tokens.
+- Una vez que tenemos los tokens sospechosos, podemos iterar sobre ellos para localizar el usuario objetivo.
+
+#### *Robo de sesión por sniffing*
+
+- Da igual lo seguros que sean los tokens generados si el atacante puede acceder a ellos.
+- Sniffing hace referencia a la intercepción y observación de comunicaciones entre el cliente y el servidor.
+- Normalmente este ataque requiere de otro previo que consiga un esquema de Man In The Middle (MITM)
+- Una vez interceptamos las comunicaciones podemos buscar el token de sesión.
+- Podemos buscarlo en cookies, en elementos ocultos, en formularios o en la URL (peor opción)
+
+#### *Contramedidas contra el robo de sesión*
+
+- Crear los token de sesión de forma que sean aleatorios (tanto como se pueda)
+- Los tokens deben caducar
+- No debemos utilizar el mismo token antes y después de la autenticación
+- Debemos utilizar cifrado en las comunicaciones para evitar el sniffing
+
+
+
+#### Repaso práctico
+- 1. Vamos a Firefox en la máquina Kali
+- 2. Accedemos a la página principal de OWASP (poniendo su ip en la barra de dirección)
+- 3. Y desde ahí accedemos a OWASP WebGoat [webgoat:webgoat]
+
 ### Ataques por diccionario y fuerza bruta
+
+Aún gestionando las sesiones correctamente, podemos ser vulnerables a ciertos ataques a credenciales.
+
+Todos los usuarios tienen que introducir sus LOGIN y PASSWORD , si el atacante consigue estos 2 datos, puede usurpar la identidad del usuario legítimo.
+
+Existen 2 ataques:
+
+- Ataques por fuerza bruta > Generar cadenas iterando entre los diferentes caracteres
+- Ataques basados en Diccionarios > Emplear usuarios y contraseñas que suelen ser comunes
+Estos ataques pueden ser ONLINE u OFFLINE
+
+    - ONLINE >> HYDRA
+    - OFFLINE >> JHON THE RIPPER
+
+Algunas veces cuando ponemos Usuario y Contraseña, y la pass está mal, podemos recibir el mensaje `La contraseña no es correcta` Con esto ya sabemos que el usuario está en bbdd, y esto es mala seguridad.
+
+Hay otros LOGINS que cuando llevamos varios intentos, nos banean durante unos minutos sin poder volver a loguearnos, esto es una buena medida contra ataques de fuerza bruta y por diccionarios.
+
+La verificación en 2 pasos también es una buena opción frente a estos tipos de ataques.
+
+#### *Ejemplo práctico para Examen*
+
+- En OWASP WebGoat > OWASP Mutillidae II > OWASP 2013 > A2 - Broken Autentication and Sessión Management > Autenticatin Bypass > Via Brute Foce > Login
+- Nos lleva a un formulario, el cual si metemos un user bien y password mal, nos avisará de que la password es incorrecta, **introduciremos las siguientes credenciales admin:a** esto nos dará el mensaje de que verificará que el user admin existe
+- Ejecutar en terminal `burpsuite`
+- Aceptar mensaje de seguridad , si aparece
+- Temporary project > Next
+- Use Burp defaults > Start Burp
+- Parte superior, pestaña > Proxy
+- Aquí podemos o abrir el navegador de brupsuite [Open browser] o intentarlo con el firefox del propio equipo
+- Vamos a la página la cual queremos interceptar 
+- `burpsuite [Pestaña Proxy]` habilitamos **intercept is off** para que se ponga en **intercept is on**
+- `navegador` logamos con las credenciales (incorrectas) admin:a y enviamos formulario
+- `burpsuite` Habrá capturado la información, con la información capturada, hacemos `clic botón derecho > Send to Intruder`
+- `burpsuite [Pestaña INTRUDER]` tendrá la información que hemos enviado
+- `burpsuite [Pestaña INTRUDER][Positions]` Necesitaremos los valores de la Cookie (entre las últimas líneas) y el varlor de la útima linea de username y password
+    - Si nos fijamos los parametros a fuzzear (intercambiar para probar) veremos que están como variables §var§ debermos limpiarlos para agregar los que necesitamos
+- `burpsuite [Pestaña INTRUDER][Positions]` botón Clear § de la parte derecha para limpiar las variables
+- `burpsuite [Pestaña INTRUDER][Positions]` Como conocemos que el usuario es admin, solo meteremos el simbolo para variable en la password quedando así `§a§` ya que metermos la a entre §
+- `burpsuite [Pestaña INTRUDER][Positions]` En la parte superior elegiremos el Attack type > **Baterring ram** (usaremos esta)
+    - Sniper: si le indicas muchos parametros, va probando cada vez con uno
+    - Battering Ram: si pones varios parametros, va probando el mismo payload con todos ellos a la vez.
+    - Pitchfork: pivota entre unos y otros parametros
+    - Cluster bomb: primero con 1 payload y luego cambia a otros parametros.
+- `burpsuite [Pestaña INTRUDER][Positions]` Cambiamos a la pestaña `Payloads`
+    - Tendremos dos posiblidades
+        - Simple list es una lista en la que nosotros vamos poniendo las palabras directamente que queremos probar
+        - Runtime file es un archivo de texto que contiene un diccionario ya creado con miles o millones de posibles palabras
+
+**Elegimos Simple list**
+
+- `burpsuite [Pestaña INTRUDER][Payloads]` Elegir Payload type > **Simple list**
+- `burpsuite [Pestaña INTRUDER][Payloads]` Apartado del medio, introduciremos uno a uno la lista de palabras que queremos probar dandole al botón `Add`
+    - Agregaremos las siguiente [hola, joe, jane, admin]
+- `burpsuite [Pestaña INTRUDER][Payloads]` En la parte superior iniciamos el ataque > Start attack
+- `burpsuite [Pestaña INTRUDER][Payloads]` Abrirá una ventana para ver como avanza en las pruebas de contraseñas, vemos que devolverá un **200 (no será valido)** y cuando encuentre la correcta, devolverá un status **diferente de 200** y el campo length devolverá un número distinto del resto
+
+**Elegimos Runtime file**
+
+- `burpsuite [Pestaña INTRUDER][Payloads]` Elegir Payload type > **Runtime file**
+- `burpsuite [Pestaña INTRUDER][Payloads]` Apartado del medio , tendremos un input para selecionar fichero
+- `burpsuite [Pestaña INTRUDER][Payloads]` Seleccionar fichero `/usr/share/wordlist/rockyou.txt` (Debemos descomprimir /usr/share/wordlist/rockyou.txt.gz con `sudo gzip -d rockyou.txt.gz`)
+- `burpsuite [Pestaña INTRUDER][Payloads]` En la parte superior iniciamos el ataque > Start attack
+- `burpsuite [Pestaña INTRUDER][Payloads]` Abrirá una ventana para ver como avanza en las pruebas de contraseñas, vemos que devolverá un **200 (no será valido)** y cuando encuentre la correcta, devolverá un status **diferente de 200** y el campo length devolverá un número distinto del resto
+
+#### *Contramedidas contra la fuerza bruta y diccionarios*
+
+- El uso de captchas, timeouts y baneos temporales por múltiples intentos puede paliar los ataques online.
+- No dar información al atacante sobre la existencia de cuentas.
+- Políticas de contraseñas.
+- Los ataques offline se pueden combatir con cifrado fuerte en las passwords, además es útil el uso de salt.
+
+** salt: es una pequeña cadena de caracteres, conocida por el propio sistema que gestiona las contraseñas, que se añade a las contraseñas hasheadas que se encuentran en el archivo de contraseñas. Esta cadena de caracteres se puede añadir al principio o al final de los hashes, o incluso por el medio, de tal manera que en caso de recibir ataques por fuerza bruta, con archivos ya hasheados, los atacantes no puedan encontrar nunca la contraseña que están buscando.
+
 ### Phising e Ingeniería Social
+
+El Phising consiste en engañar a la víctima para que introduzca sus credenciales en algún formulario de una página que simula ser una página legítima, y esos datos llegan al atacante. Se puede hacer mediante Correos, SMS, llamadas telefónicas, etc.
+
+Para ello hay que tomar las siguientes medidas:
+
+- 1. Sospechar de fuentes conocidas
+- 2. Comprobar la URL
+- 3. Comprobar el certificado de la Web si existe
+
+#### *Ejemplo práctico para Examen*
+
+- Abrimos un terminal en la máquina Kali, ejecutamos `sudo setoolkit`
+- Elegimos opción 1 > `1) Social-Engineering Attacks`
+- Elegimos opción 2 > `2) Website Attack Vectors`
+- Elegimos opción 3 > `3) Credential Harvester Attack Method`
+- Ahora tenemos diversas opciones
+    - 1 . Utilizar plantillas por defecto
+    - 2 . Clonar el sitio Web
+    - 3 . Importar el sitio Web
+- Elegimos opción 1 > `1) Web Templates`
+- Dejamos IP por defecto, damos intro
+- Ahora tenemos diversas opciones
+    - 1 . Java Required
+    - 2 . Google
+    - 3 . Twitter
+- Elegimos opción 2 > `2. Google`
+- Abrimos un navegador y accedemos a localhost
+- Mostrará una web copia de Google, pero sera una falsificación
+- Si introducimos un Email y Password estos saldrán reflejados en la terminal, que estará a la escucha de que las víctimas piquen el anzuelo
+
+#### *Contramedidas contra el Phising*
+
+- Como desarrolladores es complicado defenderse ante el phising
+- Obtener un certificado SSL puede ayudar a los usuarios observadores a evitarlo
+- Educar a los usuarios sería buena medida, pero en la mayoría de casos es poco realista
+
+### Exposición de datos sensibles
+#### *Ejemplo práctico para Examen*
+
+- Muchas veces suele existir un fichero de `phpinfo` en el server.
+    - `ip_maquina_owasp/mutillidae/phpinfo`
+- Otras veces, encontramos como fallo típico, acceder a `robots.txt` donde podemos encontrar urls que no deberiamos conocer
+    - `ip_maquina_owasp/mutillidae/robots.txt` 
+
+#### *Contramedidas contra la exposición de datos sensibles*
+
+- El conocimiento de los datos sensibles de la aplicación es clave
+- El uso de cifrados robustos tanto en transimisión como en almacenamiento
+- Eliminar todo lo que no sea necesario
+- Los logs deben tener una fecha de caducidad y estar bien protegidos
+
 ### RFI y LFI
+
+La **INCLUSIÓN Y OBTENCIÓN DE FICHEROS EN EL SERVIDOR** puede darse mediante 2 tipos:
+
+- RFI (Remote File Inclusion) > Ataque de Inclusión de Ficheros Remotos del Servidor. Usando por ejemplo la instruccion INCLUDE de PHP y el REQUEST.
+- LFI (Local File Inclusion) > Ataque de Inclusión de Ficheros Locales del Servidor. Leer un fichero de dentro del Servidor hacia afuera. Podría acceder a directorios externos a "/var/www" dentro del servidor y poder leerlos remotamente.
+
+Esta vulnerabilidad es la CONSECUENCIA de otras vulnerabilidades, como ocurre con la INYECCIÓN DE COMANDOS. Por ejemplo, las típicas web que me permiten incluir FOTOS o IMAGENES de perfil, por ahí podríamos colar los ficheros.
+
+La instrucción include de PHP junto a REQUEST permite incluir código adicional a la página, y eso es muy peligroso, porque podriamos incluir código malicioso en una página legítima.
+
+#### RFI (Payload)
+
+Existen muchas Shell en PHP y en otros lenguajes que nos permiten obtener el control sobre el servidor sin necesidad de escribir nuestra propia Shell.
+
+Hay 2 tipos de shell:
+
+- Blind shell: El atacante inicia la sesión a la máquina víctima - [p0wny-shell](https://github.com/flozz/p0wny-shell)
+- Reverse shell: La máquina víctima inicia la conexión con el atacante - [php-reverse-shell](https://github.com/pentestmonkey/php-reverse-shell)
+
+
+#### LFI (Payload)
+
+La clave para realizar éste ataque es conocer la estructura dentro del servidor de la web. Por ejemplo, si es Apache, por defecto podemos esperar que esté en "/var/www/html"
+
+#### *Ejemplo práctico para Examen*
+
+- En OWASP > bWAPP
+- Nos logueamos cn usuario y password (bee:bug)
+- Listado desplegable > `Remote and Local File Inclusion (RFI/LFI)`
+- Veremos un pequeño form, seleccionaremos idioma > Go
+- Observaremos que la barra de direcciones y veremos que en la petición GET uno de los parametros es el nombre de otro archivo PHP
+    - [url - get] /bWAPP/rlfi.php?language=lang_en.php&action=go
